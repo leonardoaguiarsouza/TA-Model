@@ -1,0 +1,48 @@
+create or replace function update_exemplar() returns trigger
+as
+$$
+begin
+	if (tg_op='INSERT') then
+		-- atualiza o estoque do produto
+		update exemplar set quantidade=quantidade-1 where id = new.exemplar;
+		
+		return new;
+	end if;
+		
+	if (tg_op='DELETE') then
+		-- atualiza o estoque do produto
+		update exemplar set quantidade=quantidade+1 where id = old.exemplar;
+		
+		return old;
+	end if;
+
+end;
+$$
+language 'plpgsql';
+
+create trigger update_exemplar
+after insert or update or delete
+on emprestimo
+for each row
+execute procedure update_exemplar()
+
+create or replace function gera_datas() returns trigger
+as
+$$
+begin
+	if (tg_op='INSERT') then
+		-- gera as datas
+		new.data_emprestimo=current_date;
+		new.data_prev_devolucao=current_date+interval '1 week';
+		
+		return new;
+	end if;
+end;
+$$
+language 'plpgsql';
+
+create trigger gera_datas
+before insert or update
+on emprestimo
+for each row
+execute procedure gera_datas();
